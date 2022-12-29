@@ -1,3 +1,4 @@
+import csv
 from datetime import datetime
 
 import requests
@@ -84,31 +85,32 @@ def get_single_it_job_post(soup: BeautifulSoup) -> ITJobPost:
             it_job_title = 'Unknown Job Title'
             it_job_company = 'Unknown Company'
         it_job_work_details_container = it_job_main_details_container.find_next_sibling('div', class_='options')
+        it_job_work_details_entries = []
         if it_job_work_details_container is not None:
-            it_job_work_details_entries = it_job_work_details_container.select('li span')
-        else:
-            it_job_work_details_entries = []
+            it_job_work_details_spans = it_job_work_details_container.select('li span')
+            for it_job_work_details_span in it_job_work_details_spans:
+                it_job_work_details_entries.append(it_job_work_details_span.text.strip())
         it_job_tech_stack_container = it_job_work_details_container.find_next_sibling('div', class_='skills')
+        it_job_tech_stack_entries = []
         if it_job_tech_stack_container is not None:
-            it_job_tech_stack_entries = it_job_tech_stack_container.find_all('li')
-        else:
-            it_job_tech_stack_entries = []
+            it_job_tech_stack_li_tags = it_job_tech_stack_container.find_all('li')
+            for it_job_tech_stack_li in it_job_tech_stack_li_tags:
+                it_job_tech_stack_entries.append(it_job_tech_stack_li.text.strip())
         it_job_company_details_container = soup.find('div', class_='margin-medium job-view-right-column no-print')
+        it_job_company_details_entries = []
         if it_job_company_details_container is not None:
             it_job_company_details_ul = it_job_company_details_container.find('ul', class_='card-icon-list pt-8')
             it_job_company_li_tags = it_job_company_details_ul.findAll('li')
-            it_job_company_details_entries = []
             for it_job_company_details_li in it_job_company_li_tags:
                 it_job_company_details_icon = it_job_company_details_li.find('i')
                 it_job_company_details_icon.decompose()
-                it_job_company_details_entries.append(it_job_company_details_li)
+                it_job_company_details_entries.append(it_job_company_details_li.text.strip())
             it_job_company_links = it_job_company_details_container.find_all('a', class_='mdc-button '
                                                                                          'mdc-button--icon-leading '
                                                                                          'button-small theme-link')
             it_job_company_profile_address = it_job_company_links[1].get('href')
             it_job_company_more_jobs_address = it_job_company_links[0].get('href')
         else:
-            it_job_company_details_entries = []
             it_job_company_profile_address = 'Unknown company profile address'
             it_job_company_more_jobs_address = 'Unknown company more jobs address'
         it_job_post_entry = ITJobPost(it_job_posting_date,
@@ -132,27 +134,49 @@ def print_it_job_post_information(it_job_post: ITJobPost):
     print(f'Work Details: ')
     if it_job_post.work_details:
         for index, it_job_work_details_entry in enumerate(it_job_post.work_details):
-            if it_job_work_details_entry.text != '':
-                print(f'{3 * " "} #{index + 1} {it_job_work_details_entry.text.strip()}')
+            if it_job_work_details_entry != '':
+                print(f'{3 * " "} #{index + 1} {it_job_work_details_entry}')
     else:
         print(f'Unfortunately, no work details were found!')
     print(f'Needed Skills: ')
     if it_job_post.technologies:
         for index, technology_entry in enumerate(it_job_post.technologies):
-            if technology_entry.text != '':
-                print(f'{3 * " "} #{index + 1} {technology_entry.text.strip()}')
+            if technology_entry != '':
+                print(f'{3 * " "} #{index + 1} {technology_entry}')
     else:
         print(f'No skills found that are required for this job!')
     print(f'Company Profile: {it_job_post.company_profile_address.strip()}')
     print(f'Company Details: ')
     if it_job_post.company_details:
         for index, company_details_entry in enumerate(it_job_post.company_details):
-            if company_details_entry.text != '':
-                print(f'{3 * " "} #{index + 1} {company_details_entry.text.strip()}')
+            if company_details_entry != '':
+                print(f'{3 * " "} #{index + 1} {company_details_entry}')
     else:
         print('Unfortunately, no company details were found!')
     print(f'More jobs from {it_job_post.company_name}: {it_job_post.more_jobs_from_company_address}')
     print('\n' * 2)
+
+
+def export_job_post_scraping_results_to_csv(csv_headers: list[str], it_jobs_posts_list: list[ITJobPost]):
+    if input() == 'Y':
+        current_datetime_for_csv_file_creation = datetime.now()
+        csv_file_name = f'ITJobPostsScrapingResults_{current_datetime_for_csv_file_creation.day}.{current_datetime_for_csv_file_creation.month}.{current_datetime_for_csv_file_creation.year}_{current_datetime_for_csv_file_creation.hour}_{current_datetime_for_csv_file_creation.minute}_{current_datetime_for_csv_file_creation.second}.csv'
+        csv_data_entries = []
+        for it_job_post in it_jobs_posts_list:
+            csv_data_entries.append({
+                'posting_date': it_job_post.posting_date,
+                'job_title': it_job_post.job_title,
+                'company_name': it_job_post.company_name,
+                'work_details': ' -> '.join(it_job_post.work_details),
+                'technologies': ' -> '.join(it_job_post.technologies),
+                'company_profile_address': it_job_post.company_profile_address,
+                'company_details': ' -> '.join(it_job_post.company_details),
+                'more_jobs_from_company_address': it_job_post.more_jobs_from_company_address
+            })
+        with open(csv_file_name, 'w', encoding='UTF8', newline='') as csv_file:
+            csv_file_writer = csv.DictWriter(csv_file, fieldnames=csv_headers)
+            csv_file_writer.writeheader()
+            csv_file_writer.writerows(csv_data_entries)
 
 
 def find_it_jobs():
@@ -193,6 +217,23 @@ def find_it_jobs():
                     # print(new_beautiful_soup.prettify())
                     current_it_job_post = get_single_it_job_post(new_beautiful_soup)
                     print_it_job_post_information(current_it_job_post)
+                    it_jobs_posts_list.append(current_it_job_post)
+            print('Do you wish to export the data? Y/N')
+            export_headers = [
+                'posting_date',
+                'job_title',
+                'company_name',
+                'work_details',
+                'technologies',
+                'company_profile_address',
+                'company_details',
+                'more_jobs_from_company_address'
+            ]
+            if input() == 'Y':
+                print('Do you want the data to be exported to csv?')
+                export_job_post_scraping_results_to_csv(export_headers, it_jobs_posts_list)
+            else:
+                print('The data is not exported at all, as you wished.')
     except Exception as exception:
         logger.error(str(exception))
 
