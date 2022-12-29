@@ -186,10 +186,10 @@ def export_job_post_scraping_results_to_csv(
                 'posting_date': it_job_post.posting_date,
                 'job_title': it_job_post.job_title,
                 'company_name': it_job_post.company_name,
-                'work_details': f'Work Details: {work_details_string}',
-                'technologies': f'Technologies: {technologies_string}',
+                'work_details': f'{work_details_string}',
+                'technologies': f'{technologies_string}',
                 'company_profile_address': it_job_post.company_profile_address,
-                'company_details': f'Company Details: {company_details_string}',
+                'company_details': f'{company_details_string}',
                 'more_jobs_from_company_address': it_job_post.more_jobs_from_company_address
             })
         with open(csv_file_name, 'w', encoding='cp1251', newline='') as csv_file:
