@@ -34,14 +34,28 @@ class ITJobPost:
     work_details: set()
     technologies: set()
     company_profile_address: str
+    company_details: set()
+    more_jobs_from_company_address: str
 
-    def __init__(self, posting_date, job_title, company_name, work_details, technologies, company_profile_address):
+    def __init__(
+            self,
+            posting_date,
+            job_title,
+            company_name,
+            work_details,
+            technologies,
+            company_profile_address,
+            company_details,
+            more_jobs_from_company_address
+    ):
         self.posting_date = posting_date
         self.job_title = job_title
         self.company_name = company_name
         self.work_details = work_details
         self.technologies = technologies
         self.company_profile_address = company_profile_address
+        self.company_details = company_details
+        self.more_jobs_from_company_address = more_jobs_from_company_address
 
 
 def log_response_failure_information(status_code: int):
@@ -52,7 +66,7 @@ def log_response_failure_information(status_code: int):
             f'https://techblog.willshouse.com/2012/01/03/most-common-user-agents/')
 
 
-def get_single_it_job_post(soup: BeautifulSoup):
+def get_single_it_job_post(soup: BeautifulSoup) -> ITJobPost:
     try:
         it_job_post_information_container = soup.find('div', class_='view-extra')
         it_job_posting_date_container = it_job_post_information_container.find('div', class_='date')
@@ -67,8 +81,8 @@ def get_single_it_job_post(soup: BeautifulSoup):
             it_job_title = it_job_main_details[0].strip()
             it_job_company = it_job_main_details[1].strip()
         else:
-            it_job_title = ''
-            it_job_company = ''
+            it_job_title = 'Unknown Job Title'
+            it_job_company = 'Unknown Company'
         it_job_work_details_container = it_job_main_details_container.find_next_sibling('div', class_='options')
         if it_job_work_details_container is not None:
             it_job_work_details_entries = it_job_work_details_container.select('li span')
@@ -80,47 +94,65 @@ def get_single_it_job_post(soup: BeautifulSoup):
         else:
             it_job_tech_stack_entries = []
         it_job_company_details_container = soup.find('div', class_='margin-medium job-view-right-column no-print')
-        it_job_company_details_ul = it_job_company_details_container.find('ul', class_='card-icon-list pt-8')
-        if it_job_company_details_ul is not None:
+        if it_job_company_details_container is not None:
+            it_job_company_details_ul = it_job_company_details_container.find('ul', class_='card-icon-list pt-8')
             it_job_company_li_tags = it_job_company_details_ul.findAll('li')
             it_job_company_details_entries = []
             for it_job_company_details_li in it_job_company_li_tags:
                 it_job_company_details_icon = it_job_company_details_li.find('i')
                 it_job_company_details_icon.decompose()
                 it_job_company_details_entries.append(it_job_company_details_li)
+            it_job_company_links = it_job_company_details_container.find_all('a', class_='mdc-button '
+                                                                                         'mdc-button--icon-leading '
+                                                                                         'button-small theme-link')
+            it_job_company_profile_address = it_job_company_links[1].get('href')
+            it_job_company_more_jobs_address = it_job_company_links[0].get('href')
         else:
             it_job_company_details_entries = []
-        it_job_company_links = it_job_company_details_container.find_all('a', class_='mdc-button '
-                                                                                     'mdc-button--icon-leading '
-                                                                                     'button-small theme-link')
-        it_job_company_profile_address = it_job_company_links[1].get('href')
-        print(f'IT Job Post Information: ')
-        print(f'Posting Date:', f'{it_job_posting_date}' if it_job_posting_date is not None else f'Unknown')
-        print(f'Job Title: {it_job_title}')
-        print(f'Company Name: {it_job_company}')
-        print(f'Work Details: ')
-        if it_job_work_details_entries:
-            for index, it_job_work_details_entry in enumerate(it_job_work_details_entries):
-                if it_job_work_details_entry.text != '':
-                    print(f'{3 * " "} #{index + 1} {it_job_work_details_entry.text.strip()}')
-        else:
-            print(f'Unfortunately, no work details are found!')
-        print(f'Needed Skills: ')
-        if it_job_tech_stack_entries:
-            for index, it_job_tech_stack_entry in enumerate(it_job_tech_stack_entries):
-                if it_job_tech_stack_entry.text != '':
-                    print(f'{3 * " "} #{index + 1} {it_job_tech_stack_entry.text.strip()}')
-        else:
-            print(f'No skills found that are required for this job!')
-        print(f'Company Details: ')
-        if it_job_company_details_entries:
-            for index, it_job_company_details_entry in enumerate(it_job_company_details_entries):
-                if it_job_company_details_entry.text != '':
-                    print(f'{3 * " "} #{index + 1} {it_job_company_details_entry.text.strip()}')
-        print(f'Company Profile: {it_job_company_profile_address.strip()}')
-        print('\n' * 2)
+            it_job_company_profile_address = 'Unknown company profile address'
+            it_job_company_more_jobs_address = 'Unknown company more jobs address'
+        it_job_post_entry = ITJobPost(it_job_posting_date,
+                                      it_job_title,
+                                      it_job_company,
+                                      it_job_work_details_entries,
+                                      it_job_tech_stack_entries,
+                                      it_job_company_profile_address,
+                                      it_job_company_details_entries,
+                                      it_job_company_more_jobs_address)
+        return it_job_post_entry
     except AttributeError as attributeError:
         logger.error(str(attributeError))
+
+
+def print_it_job_post_information(it_job_post: ITJobPost):
+    print(f'IT Job Post Information: ')
+    print(f'Posting Date:', f'{it_job_post.posting_date}' if it_job_post.posting_date is not None else f'Unknown')
+    print(f'Job Title: {it_job_post.job_title}')
+    print(f'Company Name: {it_job_post.company_name}')
+    print(f'Work Details: ')
+    if it_job_post.work_details:
+        for index, it_job_work_details_entry in enumerate(it_job_post.work_details):
+            if it_job_work_details_entry.text != '':
+                print(f'{3 * " "} #{index + 1} {it_job_work_details_entry.text.strip()}')
+    else:
+        print(f'Unfortunately, no work details were found!')
+    print(f'Needed Skills: ')
+    if it_job_post.technologies:
+        for index, technology_entry in enumerate(it_job_post.technologies):
+            if technology_entry.text != '':
+                print(f'{3 * " "} #{index + 1} {technology_entry.text.strip()}')
+    else:
+        print(f'No skills found that are required for this job!')
+    print(f'Company Profile: {it_job_post.company_profile_address.strip()}')
+    print(f'Company Details: ')
+    if it_job_post.company_details:
+        for index, company_details_entry in enumerate(it_job_post.company_details):
+            if company_details_entry.text != '':
+                print(f'{3 * " "} #{index + 1} {company_details_entry.text.strip()}')
+    else:
+        print('Unfortunately, no company details were found!')
+    print(f'More jobs from {it_job_post.company_name}: {it_job_post.more_jobs_from_company_address}')
+    print('\n' * 2)
 
 
 def find_it_jobs():
@@ -147,7 +179,7 @@ def find_it_jobs():
 
             it_jobs_posts_list = []
 
-            print('IT job posts with links')
+            print('IT job posts with links \n')
             for it_job_post_link in it_jobs_posts_links_list:
                 print(f'Link to IT Job Post - {it_job_post_link.href}')
                 single_job_post_response = requests.get(it_job_post_link.href, headers=headers)
@@ -159,7 +191,8 @@ def find_it_jobs():
                     single_job_post_html_text = single_job_post_response.text
                     new_beautiful_soup = BeautifulSoup(single_job_post_html_text, 'lxml')
                     # print(new_beautiful_soup.prettify())
-                    get_single_it_job_post(new_beautiful_soup)
+                    current_it_job_post = get_single_it_job_post(new_beautiful_soup)
+                    print_it_job_post_information(current_it_job_post)
     except Exception as exception:
         logger.error(str(exception))
 
