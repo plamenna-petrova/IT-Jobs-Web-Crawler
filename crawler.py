@@ -80,7 +80,7 @@ def get_single_it_job_post(soup: BeautifulSoup) -> ITJobPost:
             it_job_main_details_container = it_job_title_span.parent
             it_job_main_details = it_job_main_details_container.text.strip().split(',')
             it_job_title = it_job_main_details[0].strip()
-            it_job_company = it_job_main_details[1].strip()
+            it_job_company = it_job_main_details[len(it_job_main_details) - 1].strip()
         else:
             it_job_title = 'Unknown Job Title'
             it_job_company = 'Unknown Company'
@@ -157,26 +157,46 @@ def print_it_job_post_information(it_job_post: ITJobPost):
     print('\n' * 2)
 
 
-def export_job_post_scraping_results_to_csv(csv_headers: list[str], it_jobs_posts_list: list[ITJobPost]):
-    if input() == 'Y':
-        current_datetime_for_csv_file_creation = datetime.now()
-        csv_file_name = f'ITJobPostsScrapingResults_{current_datetime_for_csv_file_creation.day}.{current_datetime_for_csv_file_creation.month}.{current_datetime_for_csv_file_creation.year}_{current_datetime_for_csv_file_creation.hour}_{current_datetime_for_csv_file_creation.minute}_{current_datetime_for_csv_file_creation.second}.csv'
+def get_timestamp_arguments_for_filename(datetime_result: datetime) -> tuple[int, int, int, int, int, int]:
+    return(
+        datetime_result.day,
+        datetime_result.month,
+        datetime_result.year,
+        datetime_result.hour,
+        datetime_result.minute,
+        datetime_result.second
+    )
+
+
+def export_job_post_scraping_results_to_csv(
+        datetime_for_csv_file_creation: datetime,
+        csv_headers: list[str],
+        it_jobs_posts_list: list[ITJobPost]
+):
+    if input().upper() == 'Y':
+        csv_file_name_arguments = get_timestamp_arguments_for_filename(datetime_for_csv_file_creation)
+        csv_file_name = '''ITJobPostsScrapingResults_{0}.{1}.{2}_{3}_{4}_{5}.csv'''.format(*csv_file_name_arguments)
         csv_data_entries = []
         for it_job_post in it_jobs_posts_list:
+            tabulation_string = '\t'
+            work_details_string = tabulation_string.join(it_job_post.work_details)
+            technologies_string = tabulation_string.join(it_job_post.technologies)
+            company_details_string = tabulation_string.join(it_job_post.company_details)
             csv_data_entries.append({
                 'posting_date': it_job_post.posting_date,
                 'job_title': it_job_post.job_title,
                 'company_name': it_job_post.company_name,
-                'work_details': ' -> '.join(it_job_post.work_details),
-                'technologies': ' -> '.join(it_job_post.technologies),
+                'work_details': f'Work Details: {work_details_string}',
+                'technologies': f'Technologies: {technologies_string}',
                 'company_profile_address': it_job_post.company_profile_address,
-                'company_details': ' -> '.join(it_job_post.company_details),
+                'company_details': f'Company Details: {company_details_string}',
                 'more_jobs_from_company_address': it_job_post.more_jobs_from_company_address
             })
-        with open(csv_file_name, 'w', encoding='UTF8', newline='') as csv_file:
+        with open(csv_file_name, 'w', encoding='cp1251', newline='') as csv_file:
             csv_file_writer = csv.DictWriter(csv_file, fieldnames=csv_headers)
             csv_file_writer.writeheader()
             csv_file_writer.writerows(csv_data_entries)
+            csv_file.close()
 
 
 def find_it_jobs():
@@ -216,10 +236,13 @@ def find_it_jobs():
                     new_beautiful_soup = BeautifulSoup(single_job_post_html_text, 'lxml')
                     # print(new_beautiful_soup.prettify())
                     current_it_job_post = get_single_it_job_post(new_beautiful_soup)
-                    print_it_job_post_information(current_it_job_post)
-                    it_jobs_posts_list.append(current_it_job_post)
+                    if current_it_job_post.job_title == it_job_post_link.title:
+                        print_it_job_post_information(current_it_job_post)
+                        it_jobs_posts_list.append(current_it_job_post)
+                    else:
+                        print(f'Found mismatch between the title of job post link and the job title itself!')
             print('Do you wish to export the data? Y/N')
-            export_headers = [
+            file_export_headers = [
                 'posting_date',
                 'job_title',
                 'company_name',
@@ -229,9 +252,10 @@ def find_it_jobs():
                 'company_details',
                 'more_jobs_from_company_address'
             ]
-            if input() == 'Y':
+            if input().upper() == 'Y':
                 print('Do you want the data to be exported to csv?')
-                export_job_post_scraping_results_to_csv(export_headers, it_jobs_posts_list)
+                current_datetime_for_csv_file_creation = datetime.now()
+                export_job_post_scraping_results_to_csv(current_datetime_for_csv_file_creation, file_export_headers, it_jobs_posts_list)
             else:
                 print('The data is not exported at all, as you wished.')
     except Exception as exception:
