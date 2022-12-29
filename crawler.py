@@ -55,12 +55,20 @@ def log_response_failure_information(status_code: int):
 def get_single_it_job_post(soup: BeautifulSoup):
     try:
         it_job_post_information_container = soup.find('div', class_='view-extra')
-        it_job_posting_date = it_job_post_information_container.find('div', class_='date').string.split(',')[0].strip()
+        it_job_posting_date_container = it_job_post_information_container.find('div', class_='date')
+        if it_job_posting_date_container is not None:
+            it_job_posting_date = it_job_posting_date_container.string.split(',')[0].strip()
+        else:
+            it_job_posting_date = None
         it_job_title_span = it_job_post_information_container.find('span', class_='bold')
-        it_job_main_details_container = it_job_title_span.parent
-        it_job_main_details = it_job_main_details_container.text.strip().split(',')
-        it_job_title = it_job_main_details[0].strip()
-        it_job_company = it_job_main_details[1].strip()
+        if it_job_title_span is not None:
+            it_job_main_details_container = it_job_title_span.parent
+            it_job_main_details = it_job_main_details_container.text.strip().split(',')
+            it_job_title = it_job_main_details[0].strip()
+            it_job_company = it_job_main_details[1].strip()
+        else:
+            it_job_title = ''
+            it_job_company = ''
         it_job_work_details_container = it_job_main_details_container.find_next_sibling('div', class_='options')
         if it_job_work_details_container is not None:
             it_job_work_details_entries = it_job_work_details_container.select('li span')
@@ -87,7 +95,7 @@ def get_single_it_job_post(soup: BeautifulSoup):
                                                                                      'button-small theme-link')
         it_job_company_profile_address = it_job_company_links[1].get('href')
         print(f'IT Job Post Information: ')
-        print(f'Posting Date: {it_job_posting_date}')
+        print(f'Posting Date:', f'{it_job_posting_date}' if it_job_posting_date is not None else f'Unknown')
         print(f'Job Title: {it_job_title}')
         print(f'Company Name: {it_job_company}')
         print(f'Work Details: ')
