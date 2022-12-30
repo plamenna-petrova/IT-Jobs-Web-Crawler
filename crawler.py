@@ -15,6 +15,8 @@ from it_job_post_link import ITJobPostLink
 
 from it_job_post import ITJobPost
 
+from file_export_functions import *
+
 IT_JOBS_SCRAPING_URL = 'https://www.jobs.bg/en/front_job_search.php?subm=1&categories%5B%5D=56&domains%5B%5D=5&domains%5B%5D=3&domains%5B%5D=2&domains%5B%5D=1&salary_from=1'
 
 
@@ -122,97 +124,6 @@ def print_it_job_post_information(it_job_post: ITJobPost):
         print('Unfortunately, no company details were found!')
     print(f'More jobs from {it_job_post.company_name}: {it_job_post.more_jobs_from_company_address}')
     print('\n' * 2)
-
-
-def get_timestamp_arguments_for_filename(datetime_result: datetime) -> tuple[str, str, str, str, str, str]:
-    return(
-        str(datetime_result.day) if (datetime_result.day >= 10) else f'{0}{str(datetime_result.day)}',
-        str(datetime_result.month) if (datetime_result.month >= 10) else f'{0}{str(datetime_result.month)}',
-        str(datetime_result.year),
-        str(datetime_result.hour) if (datetime_result.hour >= 10) else f'{0}{str(datetime_result.hour)}',
-        str(datetime_result.minute) if (datetime_result.minute >= 10) else f'{0}{str(datetime_result.minute)}',
-        str(datetime_result.second) if (datetime_result.second >= 10) else f'{0}{str(datetime_result.second)}'
-     )
-
-
-def export_job_posts_scraping_results_to_csv(
-        datetime_for_csv_file_creation: datetime,
-        csv_headers: list[str],
-        it_jobs_posts_list: list[ITJobPost]
-):
-    try:
-        if input().upper() == 'Y':
-            csv_file_name_arguments = get_timestamp_arguments_for_filename(datetime_for_csv_file_creation)
-            csv_file_name = '''ITJobPostsScrapingResults_{0}.{1}.{2}_{3}_{4}_{5}.csv'''.format(*csv_file_name_arguments)
-            csv_data_entries = []
-            for it_job_post in it_jobs_posts_list:
-                tabulation_string = '\t'
-                work_details_string = tabulation_string.join(it_job_post.work_details)
-                technologies_string = tabulation_string.join(it_job_post.technologies)
-                company_details_string = tabulation_string.join(it_job_post.company_details)
-                csv_data_entries.append({
-                    'posting_date': it_job_post.posting_date,
-                    'job_title': it_job_post.job_title,
-                    'company_name': it_job_post.company_name,
-                    'work_details': f'{work_details_string}',
-                    'technologies': f'{technologies_string}',
-                    'company_profile_address': it_job_post.company_profile_address,
-                    'company_details': f'{company_details_string}',
-                    'more_jobs_from_company_address': it_job_post.more_jobs_from_company_address
-                })
-            with open(csv_file_name, 'w', encoding='cp1251', newline='') as csv_file:
-                csv_file_writer = csv.DictWriter(csv_file, fieldnames=csv_headers)
-                csv_file_writer.writeheader()
-                csv_file_writer.writerows(csv_data_entries)
-                csv_file.close()
-    except Exception as exception:
-        logger.error(str(exception))
-
-
-def export_job_posts_scraping_results_to_txt_files(
-        datetime_for_txt_files_creation: datetime,
-        it_job_posts_list: list[ITJobPost]
-):
-    try:
-        if input().upper() == 'Y':
-            txt_files_storage_folder_arguments = get_timestamp_arguments_for_filename(datetime_for_txt_files_creation)
-            txt_files_storage_directory_name = '''ITJobPostsScrapingResults_{0}.{1}.{2}_{3}_{4}_{5}'''\
-                .format(*txt_files_storage_folder_arguments)
-            os.makedirs(txt_files_storage_directory_name)
-            new_line_string = '\n'
-            for i, it_job_post in enumerate(it_job_posts_list):
-                with open(f'{txt_files_storage_directory_name}/{i}.txt', 'w') as txt_file_writer:
-                    txt_file_writer.write(f'IT Job Post Information: {new_line_string}')
-                    txt_file_writer.write(f'Posting Date: {it_job_post.posting_date} {new_line_string}')
-                    txt_file_writer.write(f'Job Title: {it_job_post.job_title} {new_line_string}')
-                    txt_file_writer.write(f'Company Name: {it_job_post.company_name} {new_line_string}')
-                    txt_file_writer.write(f'Work Details: ')
-                    if it_job_post.work_details:
-                        for j, work_details_entry in enumerate(it_job_post.work_details):
-                            if work_details_entry != '':
-                                txt_file_writer.write(f'{3 * " "} #{j + 1} {work_details_entry} {new_line_string}')
-                    else:
-                        txt_file_writer.write(f'Unfortunately, no work details were found! {new_line_string}')
-                    txt_file_writer.write(f'Needed skills: {new_line_string}')
-                    if it_job_post.technologies:
-                        for t, technologies_entry in enumerate(it_job_post.technologies):
-                            if technologies_entry != '':
-                                txt_file_writer.write(f'{3 * " "} #{t + 1} {technologies_entry} {new_line_string}')
-                    else:
-                        txt_file_writer.write(f'No skills found that are required for this job! {new_line_string}')
-                    txt_file_writer\
-                        .write(f'Company Profile: {it_job_post.company_profile_address.strip()} {new_line_string}')
-                    txt_file_writer.write(f'Company Details: {new_line_string}')
-                    if it_job_post.company_details:
-                        for c, company_details_entry in enumerate(it_job_post.company_details):
-                            if company_details_entry != '':
-                                txt_file_writer.write(f'{3 * " "} #{c + 1} {company_details_entry} {new_line_string}')
-                    else:
-                        txt_file_writer.write(f'Unfortunately, no company details were found! {new_line_string}')
-                    txt_file_writer.write(f'More jobs from {it_job_post.company_name}: {it_job_post.more_jobs_from_company_address} {new_line_string}')
-                    txt_file_writer.write('\n' * 2)
-    except Exception as exception:
-        logger.error(str(exception))
 
 
 def find_it_jobs():
