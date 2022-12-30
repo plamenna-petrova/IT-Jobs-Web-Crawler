@@ -23,6 +23,10 @@ headers = {
 logger = logging.getLogger('ftpuploader')
 
 
+wanted_seniority_level = ''
+
+with_file_export_options = False
+
 def log_response_failure_information(status_code: int):
     logger.warning(f'Error fetching the given page, https://http.cat/{status_code}')
     if status_code == 503:
@@ -140,8 +144,9 @@ def find_it_jobs():
                 it_job_post_tag = it_job_post.a
                 it_job_post_title = it_job_post_tag['title']
                 it_job_post_href = it_job_post_tag['href']
-                it_job_post_link = ITJobPostLink(it_job_post_title, it_job_post_href)
-                it_jobs_posts_links_list.append(it_job_post_link)
+                if wanted_seniority_level.lower() in it_job_post_title.lower():
+                    it_job_post_link = ITJobPostLink(it_job_post_title, it_job_post_href)
+                    it_jobs_posts_links_list.append(it_job_post_link)
 
             it_jobs_posts_list = []
 
@@ -164,45 +169,53 @@ def find_it_jobs():
                     else:
                         print(f'Found mismatch between the title of the job post link and the job title itself!')
 
-            print('Do you wish to export the data? Y/N')
-            file_export_headers = [
-                'posting_date',
-                'job_title',
-                'company_name',
-                'work_details',
-                'technologies',
-                'company_profile_address',
-                'company_details',
-                'more_jobs_from_company_address'
-            ]
-            if input().upper() == 'Y':
-                print('Do you want the data to be exported to a csv file?')
-                current_datetime_for_csv_file_creation = datetime.now()
-                export_job_posts_scraping_results_to_csv(
-                    current_datetime_for_csv_file_creation,
-                    file_export_headers,
-                    it_jobs_posts_list
-                )
-                print('Do you want the data to be exported to txt files?')
-                current_datetime_for_txt_files_creation = datetime.now()
-                export_job_posts_scraping_results_to_txt_files(
-                    current_datetime_for_txt_files_creation,
-                    it_jobs_posts_list
-                )
-                print('Do you want the data to be exported to a pdf file?')
-                current_datetime_for_txt_files_creation = datetime.now()
-                export_job_post_scraping_results_to_pdf(
-                    current_datetime_for_txt_files_creation,
-                    it_jobs_posts_list
-                )
-            else:
-                print('The data is not exported at all, as you wished.')
+            print('Data export initiated...')
+            print('')
+            print('Exporting data to a csv file')
+            current_datetime_for_csv_file_creation = datetime.now()
+            export_job_posts_scraping_results_to_csv(
+                current_datetime_for_csv_file_creation,
+                it_jobs_posts_list
+            )
+            print('Data successfully exported to csv')
+            print('')
+            print('Exporting data txt files within a subdirectory')
+            current_datetime_for_txt_files_creation = datetime.now()
+            export_job_posts_scraping_results_to_txt_files(
+                current_datetime_for_txt_files_creation,
+                it_jobs_posts_list
+            )
+            print('Data successfully exported to txt files')
+            print('')
+            print('Exporting data to a pdf file')
+            current_datetime_for_txt_files_creation = datetime.now()
+            export_job_post_scraping_results_to_pdf(
+                current_datetime_for_txt_files_creation,
+                it_jobs_posts_list
+            )
+            print('Data successfully exported to a pdf file')
+            print('')
     except Exception as exception:
         logger.error(str(exception))
 
 
 if __name__ == '__main__':
-    find_it_jobs()
-    base_waiting_time = 10
-    print(f'Waiting {base_waiting_time} minutes...')
-    time.sleep(base_waiting_time * 60)
+    print('Do you want to filter the results, based on seniority level Y/N')
+    if input().upper() == 'Y':
+        print('Enter the wanted seniority level: ')
+        wanted_seniority_level = input('>')
+        print(f'Filtering out results for {wanted_seniority_level} positions...')
+        print('')
+    print('Do you wish the data to be exported in several file formats after each scraping session Y/N')
+    if input().upper() == 'Y':
+        with_file_export_options = True
+        print('The data will be exported to csv, txt and pdf files!')
+    else:
+        print('The scraping results data won\'t be saved at all, as you wished...')
+    while True:
+        find_it_jobs()
+        base_waiting_time = 10
+        print(f'Waiting {base_waiting_time} minutes...')
+        # time.sleep(base_waiting_time * 60)
+        time.sleep(base_waiting_time)
+
