@@ -46,26 +46,26 @@ def get_single_it_job_post(soup: BeautifulSoup) -> ITJobPost:
         else:
             it_job_posting_date = None
         it_job_title_span = it_job_post_information_container.find('span', class_='bold')
+        it_job_work_details_entries = []
+        it_job_tech_stack_entries = []
         if it_job_title_span is not None:
             it_job_main_details_container = it_job_title_span.parent
             it_job_main_details = it_job_main_details_container.text.strip().split(',')
             it_job_title = it_job_main_details[0].strip()
             it_job_company = it_job_main_details[len(it_job_main_details) - 1].strip()
+            it_job_work_details_container = it_job_main_details_container.find_next_sibling('div', class_='options')
+            if it_job_work_details_container is not None:
+                it_job_work_details_spans = it_job_work_details_container.select('li span')
+                for it_job_work_details_span in it_job_work_details_spans:
+                    it_job_work_details_entries.append(it_job_work_details_span.text.strip())
+            it_job_tech_stack_container = it_job_work_details_container.find_next_sibling('div', class_='skills')
+            if it_job_tech_stack_container is not None:
+                it_job_tech_stack_li_tags = it_job_tech_stack_container.find_all('li')
+                for it_job_tech_stack_li in it_job_tech_stack_li_tags:
+                    it_job_tech_stack_entries.append(it_job_tech_stack_li.text.strip())
         else:
             it_job_title = 'Unknown Job Title'
             it_job_company = 'Unknown Company'
-        it_job_work_details_container = it_job_main_details_container.find_next_sibling('div', class_='options')
-        it_job_work_details_entries = []
-        if it_job_work_details_container is not None:
-            it_job_work_details_spans = it_job_work_details_container.select('li span')
-            for it_job_work_details_span in it_job_work_details_spans:
-                it_job_work_details_entries.append(it_job_work_details_span.text.strip())
-        it_job_tech_stack_container = it_job_work_details_container.find_next_sibling('div', class_='skills')
-        it_job_tech_stack_entries = []
-        if it_job_tech_stack_container is not None:
-            it_job_tech_stack_li_tags = it_job_tech_stack_container.find_all('li')
-            for it_job_tech_stack_li in it_job_tech_stack_li_tags:
-                it_job_tech_stack_entries.append(it_job_tech_stack_li.text.strip())
         it_job_company_details_container = soup.find('div', class_='margin-medium job-view-right-column no-print')
         it_job_company_details_entries = []
         if it_job_company_details_container is not None:

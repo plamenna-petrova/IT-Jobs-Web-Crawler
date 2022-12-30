@@ -130,7 +130,7 @@ def export_job_post_scraping_results_to_pdf(
                 )
             pdf_data = ()
             for it_job_post in it_job_posts_list:
-                technologies_string = ','.join(it_job_post.technologies)
+                technologies_string = ', '.join(it_job_post.technologies)
                 if technologies_string == '':
                     technologies_string = 'No skills found that are required for this job!'
                 pdf_data_entry = (
