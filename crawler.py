@@ -1,3 +1,5 @@
+import enum
+
 import requests
 
 from bs4 import BeautifulSoup
@@ -12,8 +14,8 @@ from it_job_post import ITJobPost
 
 from file_export_functions import *
 
-IT_JOBS_SCRAPING_URL = 'https://www.jobs.bg/en/front_job_search.php?subm=1&categories%5B%5D=56&domains%5B%5D=5&domains%5B%5D=3&domains%5B%5D=2&domains%5B%5D=1&salary_from=1'
 
+IT_JOBS_SCRAPING_URL = 'https://www.jobs.bg/en/front_job_search.php?subm=1&categories%5B%5D=56&domains%5B%5D=5&domains%5B%5D=3&domains%5B%5D=2&domains%5B%5D=1&salary_from=1'
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
@@ -22,10 +24,10 @@ headers = {
 
 logger = logging.getLogger('ftpuploader')
 
-
 wanted_seniority_level = ''
 
 with_file_export_options = False
+
 
 def log_response_failure_information(status_code: int):
     logger.warning(f'Error fetching the given page, https://http.cat/{status_code}')
@@ -169,32 +171,33 @@ def find_it_jobs():
                     else:
                         print(f'Found mismatch between the title of the job post link and the job title itself!')
 
-            print('Data export initiated...')
-            print('')
-            print('Exporting data to a csv file')
-            current_datetime_for_csv_file_creation = datetime.now()
-            export_job_posts_scraping_results_to_csv(
-                current_datetime_for_csv_file_creation,
-                it_jobs_posts_list
-            )
-            print('Data successfully exported to csv')
-            print('')
-            print('Exporting data txt files within a subdirectory')
-            current_datetime_for_txt_files_creation = datetime.now()
-            export_job_posts_scraping_results_to_txt_files(
-                current_datetime_for_txt_files_creation,
-                it_jobs_posts_list
-            )
-            print('Data successfully exported to txt files')
-            print('')
-            print('Exporting data to a pdf file')
-            current_datetime_for_txt_files_creation = datetime.now()
-            export_job_post_scraping_results_to_pdf(
-                current_datetime_for_txt_files_creation,
-                it_jobs_posts_list
-            )
-            print('Data successfully exported to a pdf file')
-            print('')
+            if with_file_export_options:
+                print('Data export initiated...')
+                print('')
+                print('Exporting data to a csv file')
+                current_datetime_for_csv_file_creation = datetime.now()
+                export_job_posts_scraping_results_to_csv(
+                    current_datetime_for_csv_file_creation,
+                    it_jobs_posts_list
+                )
+                print('CSV export finished successfully!')
+                print('')
+                print('Exporting data txt files within a subdirectory')
+                current_datetime_for_txt_files_creation = datetime.now()
+                export_job_posts_scraping_results_to_txt_files(
+                    current_datetime_for_txt_files_creation,
+                    it_jobs_posts_list
+                )
+                print('TXT export finished successfully!')
+                print('')
+                print('Exporting data to a pdf file')
+                current_datetime_for_txt_files_creation = datetime.now()
+                export_job_post_scraping_results_to_pdf(
+                    current_datetime_for_txt_files_creation,
+                    it_jobs_posts_list
+                )
+                print('PDF export finished successfully!')
+                print('')
     except Exception as exception:
         logger.error(str(exception))
 
@@ -203,9 +206,27 @@ if __name__ == '__main__':
     print('Do you want to filter the results, based on seniority level Y/N')
     if input().upper() == 'Y':
         print('Enter the wanted seniority level: ')
-        wanted_seniority_level = input('>')
-        print(f'Filtering out results for {wanted_seniority_level} positions...')
-        print('')
+        print('Options: ')
+        print('1 - Junior')
+        print('2 - Middle')
+        print('3 - Senior')
+        wanted_seniority_level_input = int(input('>'))
+        print('The user input was')
+        print(wanted_seniority_level_input)
+        if wanted_seniority_level_input == 1:
+            wanted_seniority_level = 'Junior'
+        elif wanted_seniority_level_input == 2:
+            wanted_seniority_level = 'Mid'
+        elif wanted_seniority_level_input == 3:
+            wanted_seniority_level = 'Senior'
+        else:
+            print(f'The seniority level was not given a proper format!')
+        if wanted_seniority_level != '':
+            print(wanted_seniority_level)
+            print(f'Filtering out results for {wanted_seniority_level} positions...')
+            print('')
+        else:
+            print(f'Fetching all of the results!')
     print('Do you wish the data to be exported in several file formats after each scraping session Y/N')
     if input().upper() == 'Y':
         with_file_export_options = True
@@ -216,6 +237,6 @@ if __name__ == '__main__':
         find_it_jobs()
         base_waiting_time = 10
         print(f'Waiting {base_waiting_time} minutes...')
-        # time.sleep(base_waiting_time * 60)
-        time.sleep(base_waiting_time)
-
+        time.sleep(base_waiting_time * 60)
+        # less time for data fetching for testing purposes
+        # time.sleep(base_waiting_time)
