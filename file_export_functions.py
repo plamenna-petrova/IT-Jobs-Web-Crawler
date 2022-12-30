@@ -108,8 +108,8 @@ def export_job_posts_scraping_results_to_txt_files(
                                 txt_file_writer.write(f'{3 * " "} #{c + 1} {company_details_entry} {new_line_character}')
                     else:
                         txt_file_writer.write(f'Unfortunately, no company details were found! {new_line_character}')
-                        txt_file_writer.write(f'More jobs from {it_job_post.company_name}: {it_job_post.more_jobs_from_company_address} {new_line_character}')
-                        txt_file_writer.write('\n' * 2)
+                    txt_file_writer.write(f'More jobs from {it_job_post.company_name}: {it_job_post.more_jobs_from_company_address} {new_line_character}')
+                    txt_file_writer.write('\n' * 2)
         else:
             print('No suitable job posts found. So the txt files along with the subdirectory were not created!')
     except Exception as exception:
