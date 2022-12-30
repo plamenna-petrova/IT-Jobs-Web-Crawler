@@ -1,9 +1,15 @@
 import csv
 
 import os
+from base64 import encode
+
 from datetime import datetime
 
+from crawler import logger
+
 from it_job_post import ITJobPost
+
+from fpdf import FPDF
 
 
 def get_timestamp_arguments_for_filename(datetime_result: datetime) -> tuple[str, str, str, str, str, str]:
@@ -95,3 +101,48 @@ def export_job_posts_scraping_results_to_txt_files(
                     txt_file_writer.write('\n' * 2)
     except Exception as exception:
         logger.error(str(exception))
+
+
+def export_job_post_scraping_results_to_pdf(
+        datetime_for_pdf_file_creation: datetime,
+        it_job_posts_list: list[ITJobPost]
+):
+    try:
+        if input().upper() == 'Y':
+            pdf_table_column_names = \
+                (
+                 "Title",
+                 "Technologies",
+                 "Company Profile Address",
+                 )
+            pdf_data = ()
+            for it_job_post in it_job_posts_list:
+                technologies_string = ','.join(it_job_post.technologies)
+                if technologies_string == '':
+                    technologies_string = 'No skills found that are required for this job!'
+                pdf_data_entry = (
+                    it_job_post.job_title,
+                    technologies_string,
+                    it_job_post.company_profile_address,
+                )
+                pdf_data = pdf_data + (pdf_data_entry,)
+                print(f'PDF Data: ')
+                print(str(pdf_data))
+            pdf_file = FPDF('L', 'mm', 'A4')
+            pdf_file.set_font(family='Arial', style='B', size=5)
+            pdf_file.add_page()
+            line_height = pdf_file.font_size * 2.7
+            column_width = pdf_file.epw / 3
+            for pdf_column_name in pdf_table_column_names:
+                pdf_file.cell(column_width, line_height, pdf_column_name, border=1)
+            pdf_file.ln(line_height)
+            for row in pdf_data:
+                for datum in row:
+                    pdf_file.cell(column_width, line_height, datum, border=1)
+                pdf_file.ln(line_height)
+            pdf_file_name_arguments = get_timestamp_arguments_for_filename(datetime_for_pdf_file_creation)
+            pdf_file_name = '''ITJobPostsScrapingResults_{0}.{1}.{2}_{3}_{4}_{5}.pdf'''.format(*pdf_file_name_arguments)
+            pdf_file.output(pdf_file_name)
+    except Exception as exception:
+        logger.error(str(exception))
+

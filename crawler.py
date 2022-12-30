@@ -1,8 +1,3 @@
-import csv
-import os
-
-from datetime import datetime
-
 import requests
 
 from bs4 import BeautifulSoup
@@ -181,16 +176,22 @@ def find_it_jobs():
                 'more_jobs_from_company_address'
             ]
             if input().upper() == 'Y':
-                print('Do you want the data to be exported to csv?')
+                print('Do you want the data to be exported to a csv file?')
                 current_datetime_for_csv_file_creation = datetime.now()
                 export_job_posts_scraping_results_to_csv(
                     current_datetime_for_csv_file_creation,
                     file_export_headers,
                     it_jobs_posts_list
                 )
-                print('Do you want the data to be exported to txt file?')
+                print('Do you want the data to be exported to txt files?')
                 current_datetime_for_txt_files_creation = datetime.now()
                 export_job_posts_scraping_results_to_txt_files(
+                    current_datetime_for_txt_files_creation,
+                    it_jobs_posts_list
+                )
+                print('Do you want the data to be exported to a pdf file?')
+                current_datetime_for_txt_files_creation = datetime.now()
+                export_job_post_scraping_results_to_pdf(
                     current_datetime_for_txt_files_creation,
                     it_jobs_posts_list
                 )
