@@ -130,7 +130,7 @@ def export_job_post_scraping_results_to_pdf(
                 )
             pdf_data = ()
             for it_job_post in it_job_posts_list:
-                technologies_string = ', '.join(it_job_post.technologies)
+                technologies_string = ','.join(it_job_post.technologies)
                 if technologies_string == '':
                     technologies_string = 'No skills found that are required for this job!'
                 pdf_data_entry = (
@@ -138,7 +138,9 @@ def export_job_post_scraping_results_to_pdf(
                     technologies_string,
                     it_job_post.company_profile_address,
                 )
-            pdf_data = pdf_data + (pdf_data_entry,)
+                pdf_data = pdf_data + (pdf_data_entry,)
+                print(f'PDF Data: ')
+                print(str(pdf_data))
             pdf_file = FPDF('L', 'mm', 'A4')
             pdf_file.set_font(family='Helvetica', style='B', size=5)
             pdf_file.add_page()
