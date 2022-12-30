@@ -139,8 +139,6 @@ def export_job_post_scraping_results_to_pdf(
                     it_job_post.company_profile_address,
                 )
                 pdf_data = pdf_data + (pdf_data_entry,)
-                print(f'PDF Data: ')
-                print(str(pdf_data))
             pdf_file = FPDF('L', 'mm', 'A4')
             pdf_file.set_font(family='Helvetica', style='B', size=5)
             pdf_file.add_page()
